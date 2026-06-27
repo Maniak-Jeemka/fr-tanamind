@@ -1,4 +1,4 @@
-# 📋 Team Rules — PakChoy Guard
+# 📋 Team Rules — Tanamind
 > Dokumen ini wajib dibaca dan disepakati semua anggota sebelum mulai coding.
 > Kalau ada yang mau diubah, diskusi dulu di grup — jangan ubah sepihak.
 
