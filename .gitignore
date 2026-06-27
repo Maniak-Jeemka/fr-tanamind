@@ -1,0 +1,16 @@
+# Semua folder
+.env
+node_modules/
+__pycache__/
+*.pyc
+
+# Frontend
+pakcoy-frontend/dist/
+
+# Backend
+pakcoy-backend/vendor/
+pakcoy-backend/storage/app/public/
+
+# ML
+pakcoy-ml/models/*.keras
+pakcoy-ml/models/*.pkl
