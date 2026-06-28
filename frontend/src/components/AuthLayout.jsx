@@ -9,7 +9,7 @@ const AuthLayout = ({ children }) => {
     return (
         <div className="min-h-screen bg-background flex text-foreground font-sans">
             {/* Left side: Promotional Banner */}
-            <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-[#eaf2e3] to-[#d2e3c8] border-r border-border flex-col p-12 justify-between relative overflow-hidden">
+            <div className="hidden lg:flex w-1/2 bg-linear-to-br from-[#eaf2e3] to-[#d2e3c8] border-r border-border flex-col p-12 justify-between relative overflow-hidden">
                 
                 {/* Logo Area */}
                 <div className="flex items-center gap-3">

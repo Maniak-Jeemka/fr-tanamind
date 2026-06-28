@@ -101,7 +101,7 @@ const Scan = () => {
                     <CardHeader>
                         <CardTitle className="text-lg text-card-foreground">Diagnosis Result</CardTitle>
                     </CardHeader>
-                    <CardContent className="h-[400px]">
+                    <CardContent className="h-100">
                         {!image && !isScanning && !result ? (
                             <div className="h-full flex flex-col items-center justify-center text-center p-6 text-muted-foreground">
                                 <Leaf className="w-12 h-12 mb-4 opacity-50" />
