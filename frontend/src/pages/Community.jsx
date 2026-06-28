@@ -1,34 +1,56 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '../components/ui/card';
-import { Search, Image as ImageIcon, MessageSquare, Heart, Share2, MoreHorizontal } from 'lucide-react';
+import { Search, MessageSquare, Heart, Share2, Send, Leaf } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { getCommunityPosts, addComment } from '../services/communityService';
+import { Link } from 'react-router-dom';
 
 const Community = () => {
     const { user } = useAuth();
+    const [posts, setPosts] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [commentInputs, setCommentInputs] = useState({});
+    const [commentingId, setCommentingId] = useState(null);
 
-    const posts = [
-        {
-            id: 1,
-            author: 'Budi Santoso',
-            role: 'Expert Grower',
-            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Budi',
-            time: '2 hours ago',
-            content: 'Just successfully treated my tomato plants for leaf spot using the recommendations from Tanamind! The copper fungicide worked wonders after just a week.',
-            image: 'https://images.unsplash.com/photo-1592841200221-a6898f307baa?w=600&h=400&fit=crop',
-            likes: 24,
-            comments: 5
-        },
-        {
-            id: 2,
-            author: 'Siti Aminah',
-            role: 'Beginner',
-            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Siti',
-            time: '5 hours ago',
-            content: 'Does anyone know why my Monstera leaves are turning yellow at the edges? The scan says it might be overwatering, but I only water once a week.',
-            likes: 12,
-            comments: 18
+    const fetchPosts = async () => {
+        try {
+            const response = await getCommunityPosts();
+            if (response.status === 'success') {
+                setPosts(response.data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch community posts:", error);
+        } finally {
+            setLoading(false);
         }
-    ];
+    };
+
+    useEffect(() => {
+        fetchPosts();
+    }, []);
+
+    const handleCommentChange = (postId, value) => {
+        setCommentInputs(prev => ({ ...prev, [postId]: value }));
+    };
+
+    const submitComment = async (postId) => {
+        const body = commentInputs[postId];
+        if (!body || !body.trim()) return;
+
+        setCommentingId(postId);
+        try {
+            const res = await addComment(postId, { body });
+            if (res.status === 'success') {
+                // Refresh posts or just manually insert the new comment
+                setCommentInputs(prev => ({ ...prev, [postId]: '' }));
+                fetchPosts(); // Refreshing to get the updated comments and count
+            }
+        } catch (error) {
+            console.error("Failed to add comment:", error);
+        } finally {
+            setCommentingId(null);
+        }
+    };
 
     return (
         <div className="p-8 max-w-4xl mx-auto space-y-8">
@@ -49,82 +71,109 @@ const Community = () => {
                 </div>
             </div>
 
-            {/* Create Post */}
-            <Card className="bg-card border-none clay-sm rounded-3xl overflow-hidden mb-8">
-                <CardContent className="p-6 sm:p-8">
-                    <div className="flex items-center gap-4 mb-6">
-                        <img src={user?.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=Admin"} alt="User" className="w-12 h-12 rounded-full bg-background clay-inset object-cover shrink-0 p-1" />
-                        <div>
-                            <h3 className="text-foreground font-bold text-lg">{user?.name || 'Admin'}</h3>
-                            <p className="text-primary font-medium text-sm">Create a new post</p>
-                        </div>
+            {/* Hint Box */}
+            <div className="bg-primary/10 border border-primary/20 rounded-2xl p-5 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="bg-primary/20 p-2 rounded-xl text-primary">
+                        <Leaf className="w-5 h-5" />
                     </div>
-                    
-                    <div className="space-y-5">
-                        <textarea 
-                            placeholder="Share an update, ask a question, or post a scan result..." 
-                            className="w-full bg-background border-none rounded-2xl p-5 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none min-h-35 clay-inset text-[15px] leading-relaxed"
-                        ></textarea>
-                        <div className="flex items-center justify-between pt-2">
-                            <button className="flex items-center gap-2 text-muted-foreground hover:text-primary bg-background clay-sm px-5 py-2.5 rounded-xl transition-all text-sm font-semibold active:translate-y-0.5">
-                                <ImageIcon className="w-5 h-5" />
-                                Add Photo
-                            </button>
-                            <button className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-10 py-2.5 rounded-xl transition-all clay-primary text-sm active:translate-y-0.5">
-                                Post
-                            </button>
-                        </div>
+                    <div>
+                        <h4 className="font-bold text-primary">Want to share?</h4>
+                        <p className="text-sm text-foreground/80">Scan a plant and click "Share to Community" from the result page!</p>
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+                <Link to="/scan" className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-4 py-2 rounded-xl text-sm transition-all clay-primary">
+                    Scan Now
+                </Link>
+            </div>
 
             {/* Feed */}
             <div className="space-y-8">
-                {posts.map(post => (
+                {loading ? (
+                    <div className="text-center text-muted-foreground p-8">Loading posts...</div>
+                ) : posts.length === 0 ? (
+                    <div className="text-center text-muted-foreground p-8">Belum ada post di komunitas.</div>
+                ) : posts.map(post => (
                     <Card key={post.id} className="bg-card border-none clay-sm rounded-3xl overflow-hidden">
-                        <CardContent className="p-6 sm:p-8">
+                        <CardContent className="p-6 sm:p-8 space-y-5">
                             {/* Post Header */}
-                            <div className="flex justify-between items-start mb-6">
-                                <div className="flex items-center gap-4">
-                                    <img src={post.avatar} alt={post.author} className="w-12 h-12 rounded-full bg-background clay-inset object-cover p-1 shrink-0" />
-                                    <div>
-                                        <h3 className="text-foreground font-bold text-lg">{post.author}</h3>
-                                        <div className="flex items-center gap-2 text-sm mt-0.5">
-                                            <span className="text-primary font-semibold">{post.role}</span>
-                                            <span className="text-muted-foreground/40">•</span>
-                                            <span className="text-muted-foreground">{post.time}</span>
-                                        </div>
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg clay-primary shrink-0">
+                                    {post.user?.name?.charAt(0) || 'U'}
+                                </div>
+                                <div>
+                                    <h3 className="text-foreground font-bold text-lg">{post.user?.name || 'User'}</h3>
+                                    <div className="flex items-center gap-2 text-sm mt-0.5">
+                                        <span className="text-primary font-semibold capitalize">{post.user?.role || 'Member'}</span>
+                                        <span className="text-muted-foreground/40">•</span>
+                                        <span className="text-muted-foreground">{new Date(post.created_at).toLocaleDateString()}</span>
                                     </div>
                                 </div>
-                                <button className="text-muted-foreground hover:text-primary p-2 rounded-xl bg-background clay-sm transition-all active:translate-y-0.5">
-                                    <MoreHorizontal className="w-5 h-5" />
-                                </button>
                             </div>
 
                             {/* Post Content */}
-                            <div className="space-y-5">
-                                <p className="text-foreground/90 leading-relaxed text-[15px]">{post.content}</p>
-                                {post.image && (
-                                    <div className="rounded-2xl overflow-hidden clay-inset p-2 bg-background">
-                                        <img src={post.image} alt="Post media" className="w-full h-auto object-cover rounded-xl" />
+                            <div className="space-y-4">
+                                {post.caption && (
+                                    <p className="text-foreground/90 leading-relaxed text-[15px]">{post.caption}</p>
+                                )}
+                                
+                                {post.scan_result && (
+                                    <div className="rounded-2xl overflow-hidden border border-border clay-inset bg-background flex flex-col sm:flex-row gap-4 p-4">
+                                        <img src={post.scan_result.image_url} alt="Scan result" className="w-full sm:w-32 sm:h-32 object-cover rounded-xl shrink-0" />
+                                        <div className="space-y-2 flex-1">
+                                            <div className="font-semibold text-foreground">Scan Result</div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-sm text-muted-foreground">Disease:</span>
+                                                <span className="font-medium">{post.scan_result.disease_label}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-sm text-muted-foreground">Severity:</span>
+                                                <span className="font-medium">{post.scan_result.severity_label || '-'}</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 )}
                             </div>
 
-                            {/* Post Actions */}
-                            <div className="flex items-center gap-2 sm:gap-6 mt-8 pt-6 border-t border-black/5">
-                                <button className="flex flex-1 sm:flex-none justify-center items-center gap-2 text-muted-foreground hover:text-primary bg-background clay-sm px-4 py-2.5 rounded-xl transition-all text-sm font-semibold active:translate-y-0.5 group">
-                                    <Heart className="w-4 h-4 group-hover:fill-primary/20" />
-                                    {post.likes}
-                                </button>
-                                <button className="flex flex-1 sm:flex-none justify-center items-center gap-2 text-muted-foreground hover:text-primary bg-background clay-sm px-4 py-2.5 rounded-xl transition-all text-sm font-semibold active:translate-y-0.5">
-                                    <MessageSquare className="w-4 h-4" />
-                                    {post.comments}
-                                </button>
-                                <button className="flex flex-1 sm:flex-none justify-center items-center gap-2 text-muted-foreground hover:text-primary bg-background clay-sm px-4 py-2.5 rounded-xl transition-all text-sm font-semibold active:translate-y-0.5 sm:ml-auto">
-                                    <Share2 className="w-4 h-4" />
-                                    Share
-                                </button>
+                            {/* Comments Section */}
+                            <div className="pt-4 border-t border-border space-y-4">
+                                <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
+                                    <MessageSquare className="w-4 h-4" /> 
+                                    Comments ({post.comments_count || 0})
+                                </h4>
+                                
+                                {post.comments && post.comments.length > 0 && (
+                                    <div className="space-y-3">
+                                        {post.comments.map(comment => (
+                                            <div key={comment.id} className="bg-muted/30 p-3 rounded-xl clay-inset border border-border">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className="font-bold text-sm text-foreground">{comment.user?.name || 'User'}</span>
+                                                    <span className="text-xs text-muted-foreground">{new Date(comment.created_at).toLocaleDateString()}</span>
+                                                </div>
+                                                <p className="text-sm text-foreground/80">{comment.body}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Add Comment */}
+                                <div className="flex gap-2">
+                                    <input 
+                                        type="text" 
+                                        placeholder="Add a comment..."
+                                        value={commentInputs[post.id] || ''}
+                                        onChange={(e) => handleCommentChange(post.id, e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && submitComment(post.id)}
+                                        className="flex-1 bg-background border border-border rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 clay-inset"
+                                    />
+                                    <button 
+                                        onClick={() => submitComment(post.id)}
+                                        disabled={commentingId === post.id || !commentInputs[post.id]?.trim()}
+                                        className="bg-primary text-primary-foreground p-2 rounded-xl clay-primary disabled:opacity-50"
+                                    >
+                                        <Send className="w-5 h-5" />
+                                    </button>
+                                </div>
                             </div>
                         </CardContent>
                     </Card>

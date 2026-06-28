@@ -28,3 +28,12 @@ export const logoutUser = async () => {
     const response = await api.post("/auth/logout");
     return response.data;
 };
+
+/**
+ * Get the current user profile (requires auth token)
+ * @returns {Promise<{ status: string, message: string, data: object }>}
+ */
+export const getCurrentUser = async () => {
+    const response = await api.get("/user");
+    return response.data;
+};

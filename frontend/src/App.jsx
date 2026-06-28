@@ -13,6 +13,7 @@ import Scan from "./pages/Scan";
 import Community from "./pages/Community";
 import Profile from "./pages/Profile";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import ScanResult from "./pages/ScanResult";
 
 function App() {
     return (
@@ -28,6 +29,7 @@ function App() {
                     <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
                         <Route path="/dashboard" element={<Dashboard />} />
                         <Route path="/scan" element={<Scan />} />
+                        <Route path="/scan/:id" element={<ScanResult />} />
                         <Route path="/community" element={<Community />} />
                         <Route path="/profile" element={<Profile />} />
                         

@@ -1,23 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
-import { Users, Activity, Crosshair, Server, Database, MoreVertical, Edit2, Trash2 } from 'lucide-react';
+import { Users, Activity, Scan, MessageSquare, Database } from 'lucide-react';
 import { Badge } from '../../components/ui/badge';
+import { getAdminStats, getAdminUsers } from '../../services/adminService';
 
 const AdminDashboard = () => {
     const [activeTab, setActiveTab] = useState('overview');
+    const [stats, setStats] = useState(null);
+    const [usersList, setUsersList] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [statsRes, usersRes] = await Promise.all([
+                    getAdminStats(),
+                    getAdminUsers()
+                ]);
+                
+                if (statsRes.status === 'success') setStats(statsRes.data);
+                if (usersRes.status === 'success') setUsersList(usersRes.data);
+            } catch (error) {
+                console.error("Failed to fetch admin data", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, []);
 
     const kpis = [
-        { label: 'Active Users', value: '1,248', icon: Users, color: 'text-blue-500' },
-        { label: 'Scans (30d)', value: '8,432', icon: Activity, color: 'text-primary' },
-        { label: 'Model Accuracy', value: '94.2%', icon: Crosshair, color: 'text-purple-500' },
-        { label: 'System Uptime', value: '99.9%', icon: Server, color: 'text-primary' }
-    ];
-
-    const users = [
-        { id: 1, name: 'Budi Santoso', email: 'budi@example.com', role: 'Grower', scans: 45, status: 'Active', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Budi' },
-        { id: 2, name: 'Admin Tanamind', email: 'admin@tanamind.com', role: 'Admin', scans: 120, status: 'Active', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin' },
-        { id: 3, name: 'Siti Aminah', email: 'siti@example.com', role: 'Grower', scans: 12, status: 'Inactive', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Siti' },
-        { id: 4, name: 'Ahmad Faisal', email: 'ahmad@example.com', role: 'Grower', scans: 89, status: 'Active', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ahmad' },
+        { label: 'Total Users', value: stats?.total_users || 0, icon: Users, color: 'text-blue-500' },
+        { label: 'Total Scans', value: stats?.total_scans || 0, icon: Scan, color: 'text-primary' },
+        { label: 'Scans Today', value: stats?.scans_today || 0, icon: Activity, color: 'text-purple-500' },
+        { label: 'Total Posts', value: stats?.total_posts || 0, icon: MessageSquare, color: 'text-primary' }
     ];
 
     return (
@@ -45,122 +62,104 @@ const AdminDashboard = () => {
                 </button>
             </div>
 
-            {activeTab === 'overview' && (
-                <div className="space-y-6 animate-in fade-in duration-300">
-                    {/* KPI Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {kpis.map((kpi, i) => (
-                            <Card key={i} className="bg-card border-border clay-sm">
-                                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                    <CardTitle className="text-sm font-medium text-muted-foreground">{kpi.label}</CardTitle>
-                                    <kpi.icon className={`w-5 h-5 ${kpi.color}`} />
+            {loading ? (
+                <div className="text-center py-12 text-muted-foreground">Loading admin data...</div>
+            ) : (
+                <>
+                    {activeTab === 'overview' && (
+                        <div className="space-y-6 animate-in fade-in duration-300">
+                            {/* KPI Grid */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                {kpis.map((kpi, i) => (
+                                    <Card key={i} className="bg-card border-border clay-sm">
+                                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                                            <CardTitle className="text-sm font-medium text-muted-foreground">{kpi.label}</CardTitle>
+                                            <kpi.icon className={`w-5 h-5 ${kpi.color}`} />
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="text-3xl font-bold text-foreground">{kpi.value}</div>
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </div>
+
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                {/* Disease Distribution Widget */}
+                                <Card className="bg-card border-border clay-sm">
+                                    <CardHeader className="border-b border-border pb-4">
+                                        <CardTitle className="text-lg text-card-foreground flex items-center gap-2">
+                                            <Database className="w-5 h-5 text-primary" />
+                                            Disease Distribution
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="pt-6 space-y-4">
+                                        {stats?.disease_distribution && Object.entries(stats.disease_distribution).length > 0 ? (
+                                            <div className="grid grid-cols-2 gap-4">
+                                                {Object.entries(stats.disease_distribution).map(([disease, count]) => (
+                                                    <div key={disease} className="bg-muted/30 p-4 rounded-xl border border-border clay-inset">
+                                                        <div className="text-sm text-muted-foreground mb-1">{disease}</div>
+                                                        <div className="text-xl font-bold text-foreground">{count}</div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="text-center text-muted-foreground py-4">No disease data yet.</div>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'users' && (
+                        <div className="animate-in fade-in duration-300">
+                            <Card className="bg-card border-border clay-sm">
+                                <CardHeader className="border-b border-border pb-4">
+                                    <CardTitle className="text-lg text-card-foreground">Manage Users</CardTitle>
                                 </CardHeader>
-                                <CardContent>
-                                    <div className="text-3xl font-bold text-foreground">{kpi.value}</div>
+                                <CardContent className="p-0">
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-left text-sm">
+                                            <thead className="bg-muted/50 text-muted-foreground">
+                                                <tr>
+                                                    <th className="px-6 py-4 font-medium">User</th>
+                                                    <th className="px-6 py-4 font-medium">Role</th>
+                                                    <th className="px-6 py-4 font-medium">Scans</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-border">
+                                                {usersList.map((u) => (
+                                                    <tr key={u.id} className="hover:bg-muted/30 transition-colors">
+                                                        <td className="px-6 py-4 flex items-center gap-3">
+                                                            <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">
+                                                                {u.name?.charAt(0) || 'U'}
+                                                            </div>
+                                                            <div>
+                                                                <div className="font-medium text-foreground">{u.name}</div>
+                                                                <div className="text-xs text-muted-foreground">{u.email}</div>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4 text-foreground">
+                                                            <Badge className={u.role === 'admin' ? 'bg-purple-500/10 text-purple-500 border-0 capitalize' : 'bg-muted text-muted-foreground border-0 capitalize'}>
+                                                                {u.role}
+                                                            </Badge>
+                                                        </td>
+                                                        <td className="px-6 py-4 text-foreground font-medium">{u.scan_results_count || 0}</td>
+                                                    </tr>
+                                                ))}
+                                                {usersList.length === 0 && (
+                                                    <tr>
+                                                        <td colSpan="3" className="px-6 py-8 text-center text-muted-foreground">No users found.</td>
+                                                    </tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </CardContent>
                             </Card>
-                        ))}
-                    </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {/* Model Status Widget */}
-                        <Card className="bg-card border-border clay-sm">
-                            <CardHeader className="border-b border-border pb-4">
-                                <CardTitle className="text-lg text-card-foreground flex items-center gap-2">
-                                    <Database className="w-5 h-5 text-primary" />
-                                    Model Status
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="pt-6 space-y-6">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="bg-muted/30 p-4 rounded-xl border border-border clay-inset">
-                                        <div className="text-sm text-muted-foreground mb-1">Precision</div>
-                                        <div className="text-xl font-bold text-foreground">93.8%</div>
-                                    </div>
-                                    <div className="bg-muted/30 p-4 rounded-xl border border-border clay-inset">
-                                        <div className="text-sm text-muted-foreground mb-1">Recall</div>
-                                        <div className="text-xl font-bold text-foreground">91.5%</div>
-                                    </div>
-                                    <div className="bg-muted/30 p-4 rounded-xl border border-border clay-inset">
-                                        <div className="text-sm text-muted-foreground mb-1">F1 Score</div>
-                                        <div className="text-xl font-bold text-foreground">92.6%</div>
-                                    </div>
-                                    <div className="bg-muted/30 p-4 rounded-xl border border-border clay-inset">
-                                        <div className="text-sm text-muted-foreground mb-1">Avg Latency</div>
-                                        <div className="text-xl font-bold text-foreground">450ms</div>
-                                    </div>
-                                </div>
-                                <button className="w-full bg-muted hover:bg-muted/80 text-foreground font-medium py-3 rounded-xl transition-all border border-border">
-                                    Retrain Model
-                                </button>
-                            </CardContent>
-                        </Card>
-                    </div>
-                </div>
-            )}
-
-            {activeTab === 'users' && (
-                <div className="animate-in fade-in duration-300">
-                    <Card className="bg-card border-border clay-sm">
-                        <CardHeader className="border-b border-border pb-4 flex flex-row items-center justify-between">
-                            <CardTitle className="text-lg text-card-foreground">Manage Users</CardTitle>
-                            <button className="bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium px-4 py-2 rounded-lg transition-all clay-primary">
-                                Add User
-                            </button>
-                        </CardHeader>
-                        <CardContent className="p-0">
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left text-sm">
-                                    <thead className="bg-muted/50 text-muted-foreground">
-                                        <tr>
-                                            <th className="px-6 py-4 font-medium">User</th>
-                                            <th className="px-6 py-4 font-medium">Role</th>
-                                            <th className="px-6 py-4 font-medium">Scans</th>
-                                            <th className="px-6 py-4 font-medium">Status</th>
-                                            <th className="px-6 py-4 font-medium text-right">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-border">
-                                        {users.map((u) => (
-                                            <tr key={u.id} className="hover:bg-muted/30 transition-colors">
-                                                <td className="px-6 py-4 flex items-center gap-3">
-                                                    <img src={u.avatar} alt={u.name} className="w-8 h-8 rounded-full bg-muted" />
-                                                    <div>
-                                                        <div className="font-medium text-foreground">{u.name}</div>
-                                                        <div className="text-xs text-muted-foreground">{u.email}</div>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4 text-foreground">
-                                                    <Badge className={u.role === 'Admin' ? 'bg-purple-500/10 text-purple-500 border-0' : 'bg-muted text-muted-foreground border-0'}>
-                                                        {u.role}
-                                                    </Badge>
-                                                </td>
-                                                <td className="px-6 py-4 text-foreground font-medium">{u.scans}</td>
-                                                <td className="px-6 py-4">
-                                                    <Badge className={
-                                                        u.status === 'Active' ? 'bg-primary/10 text-primary border-0' : 'bg-red-500/10 text-red-500 border-0'
-                                                    }>
-                                                        {u.status}
-                                                    </Badge>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <div className="flex justify-end gap-2">
-                                                        <button className="p-2 text-muted-foreground hover:text-blue-500 hover:bg-blue-500/10 rounded-lg transition-colors">
-                                                            <Edit2 className="w-4 h-4" />
-                                                        </button>
-                                                        <button className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors">
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
+                        </div>
+                    )}
+                </>
             )}
         </div>
     );
