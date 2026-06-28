@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import AuthLayout from '../components/AuthLayout';
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, UserPlus } from "lucide-react";
 
 const Register = () => {
     const [name, setName] = useState('');
@@ -28,27 +28,33 @@ const Register = () => {
             <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="space-y-2">
                     <label className="text-sm font-semibold text-foreground">Full Name</label>
-                    <input 
-                        type="text" 
-                        required
-                        className="w-full bg-input border border-transparent rounded-xl px-4 py-3.5 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all clay-inset"
-                        placeholder="John Doe"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        disabled={loading}
-                    />
+                    <div className="relative">
+                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                        <input 
+                            type="text" 
+                            required
+                            className="w-full bg-input border border-transparent rounded-xl pl-11 pr-4 py-3.5 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all clay-inset"
+                            placeholder="Input Your Full Name"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            disabled={loading}
+                        />
+                    </div>
                 </div>
                 <div className="space-y-2">
                     <label className="text-sm font-semibold text-foreground">Email address</label>
-                    <input 
-                        type="email" 
-                        required
-                        className="w-full bg-input border border-transparent rounded-xl px-4 py-3.5 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all clay-inset"
-                        placeholder="user@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        disabled={loading}
-                    />
+                    <div className="relative">
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                        <input 
+                            type="email" 
+                            required
+                            className="w-full bg-input border border-transparent rounded-xl pl-11 pr-4 py-3.5 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all clay-inset"
+                            placeholder="Input Your Email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            disabled={loading}
+                        />
+                    </div>
                 </div>
                 <div className="space-y-2">
                     <label className="text-sm font-semibold text-foreground">
@@ -56,11 +62,12 @@ const Register = () => {
                     </label>
 
                     <div className="relative">
+                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                         <input
                             type={showPassword ? "text" : "password"}
                             required
-                            className="w-full bg-input border border-transparent rounded-xl px-4 py-3.5 pr-12 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all clay-inset"
-                            placeholder="Masukkan Kata Sandi"
+                            className="w-full bg-input border border-transparent rounded-xl pl-11 pr-12 py-3.5 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all clay-inset"
+                            placeholder="Input Your Password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             disabled={loading}
@@ -81,11 +88,12 @@ const Register = () => {
                     </label>
 
                     <div className="relative">
+                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                         <input
-                            type={showPasswordConfirmation ? "text" : "password confirmation"}
+                            type={showPasswordConfirmation ? "text" : "password"}
                             required
-                            className="w-full bg-input border border-transparent rounded-xl px-4 py-3.5 pr-12 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all clay-inset"
-                            placeholder="Masukkan Kata Sandi"
+                            className="w-full bg-input border border-transparent rounded-xl pl-11 pr-12 py-3.5 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all clay-inset"
+                            placeholder="Input Your Confirmation Password"
                             value={passwordConfirmation}
                             onChange={(e) => setPasswordConfirmation(e.target.value)}
                             disabled={loading}
@@ -106,8 +114,9 @@ const Register = () => {
                 <button 
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3.5 rounded-xl transition-all clay-primary mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3.5 rounded-xl transition-all clay-primary mt-6 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
+                    <UserPlus className="w-4 h-4" />
                     {loading ? 'Signing up...' : 'Sign up'}
                 </button>
             </form>

@@ -1,12 +1,10 @@
 @import "tailwindcss";
 
-
-
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-    --font-heading: var(--font-sans);
-    --font-sans: 'Plus Jakarta Sans', sans-serif;
+    --font-sans: "Nunito", sans-serif;
+    --font-heading: "Nunito", sans-serif;
     
     /* Light Neumorphism shadow definitions */
     --shadow-clay-sm: 4px 4px 10px rgba(195, 205, 185, 0.7), -4px -4px 10px rgba(255, 255, 255, 1);
@@ -22,7 +20,7 @@
     --color-sidebar-primary: var(--sidebar-primary);
     --color-sidebar-foreground: var(--sidebar-foreground);
     --color-sidebar: var(--sidebar);
-    
+
     --color-ring: var(--ring);
     --color-input: var(--input);
     --color-border: var(--border);
@@ -41,7 +39,7 @@
     --color-card: var(--card);
     --color-foreground: var(--foreground);
     --color-background: var(--background);
-    
+
     --radius-sm: calc(var(--radius) * 0.6);
     --radius-md: calc(var(--radius) * 0.8);
     --radius-lg: var(--radius);
@@ -52,13 +50,13 @@
 }
 
 :root {
-    --background: #f0f4ea; /* Soft green-white */
-    --foreground: #34482c; /* Dark green text */
-    --card: #f0f4ea; /* Match background for neumorphism */
+    --background: #f0f4ea;
+    --foreground: #34482c;
+    --card: #f0f4ea;
     --card-foreground: #34482c;
     --popover: #f0f4ea;
     --popover-foreground: #34482c;
-    --primary: #5c9b3a; /* Logo leaf green, adjusted for contrast */
+    --primary: #5c9b3a;
     --primary-foreground: #ffffff;
     --secondary: #e6ecde;
     --secondary-foreground: #34482c;
@@ -67,11 +65,11 @@
     --accent: #5c9b3a;
     --accent-foreground: #ffffff;
     --destructive: #ef4444;
-    --border: transparent; /* Remove borders for soft UI */
+    --border: transparent;
     --input: #e6ecde;
     --ring: #5c9b3a;
     --radius: 1.5rem;
-    
+
     --sidebar: #f0f4ea;
     --sidebar-foreground: #34482c;
     --sidebar-primary: #5c9b3a;
@@ -83,27 +81,103 @@
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-  html {
-    @apply font-sans;
-  }
+    * {
+        @apply border-border outline-ring/50;
+    }
+
+    html {
+        font-family: "Nunito", sans-serif;
+    }
+
+    body {
+        @apply bg-background text-foreground;
+        font-family: "Nunito", sans-serif;
+    }
 }
 
 @layer utilities {
+  
+.animated-gradient{
+    background: linear-gradient(
+        135deg,
+        #f8fbf5,
+        #eef5e6,
+        #d8e7c6,
+        #c8d9b0
+    );
+
+    background-size:300% 300%;
+    animation:gradientMove 18s ease infinite;
+}
+
+@keyframes gradientMove{
+    0%{
+        background-position:0% 50%;
+    }
+
+    50%{
+        background-position:100% 50%;
+    }
+
+    100%{
+        background-position:0% 50%;
+    }
+}
+
+@keyframes float{
+    0%{
+        transform:translate(0,0);
+    }
+
+    50%{
+        transform:translate(25px,-18px);
+    }
+
+    100%{
+        transform:translate(0,0);
+    }
+}
+
+.animate-float{
+    animation:float 15s ease-in-out infinite;
+}
+
+.animate-float-slow{
+    animation:float 20s ease-in-out infinite reverse;
+}
+
+@keyframes glow{
+    0%{
+        opacity:.2;
+        transform:scale(1);
+    }
+
+    50%{
+        opacity:.45;
+        transform:scale(1.08);
+    }
+
+    100%{
+        opacity:.2;
+        transform:scale(1);
+    }
+}
+
+.animate-glow{
+    animation:glow 8s ease-in-out infinite;
+}
     .clay-sm {
         box-shadow: var(--shadow-clay-sm);
     }
+
     .clay-md {
         box-shadow: var(--shadow-clay-md);
     }
+
     .clay-inset {
         box-shadow: var(--shadow-clay-inset);
     }
+
     .clay-primary {
         box-shadow: var(--shadow-clay-primary);
     }
