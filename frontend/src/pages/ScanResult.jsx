@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getScanDetail } from '../services/scanService';
-import { createPost } from '../services/communityService';
+import { createCommunityPost } from '../services/communityService';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { ArrowLeft, Share2, Leaf, AlertTriangle, ShieldCheck } from 'lucide-react';
@@ -35,7 +35,7 @@ const ScanResult = () => {
         if (!caption.trim()) return;
         setSharing(true);
         try {
-            const res = await createPost({ scan_result_id: id, caption });
+            const res = await createCommunityPost({ scan_result_id: id, caption });
             if (res.status === 'success') {
                 setScan(prev => ({ ...prev, is_shared: true }));
                 setShowShareModal(false);
