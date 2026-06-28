@@ -2,12 +2,15 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import AuthLayout from '../components/AuthLayout';
+import { Eye, EyeOff } from "lucide-react";
 
 const Register = () => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [passwordConfirmation, setPasswordConfirmation] = useState('');
+    const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
     const { register, loading, error, clearError } = useAuth();
     const navigate = useNavigate();
 
@@ -48,28 +51,54 @@ const Register = () => {
                     />
                 </div>
                 <div className="space-y-2">
-                    <label className="text-sm font-semibold text-foreground">Password</label>
-                    <input 
-                        type="password" 
-                        required
-                        className="w-full bg-input border border-transparent rounded-xl px-4 py-3.5 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all clay-inset"
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        disabled={loading}
-                    />
+                    <label className="text-sm font-semibold text-foreground">
+                        Password
+                    </label>
+
+                    <div className="relative">
+                        <input
+                            type={showPassword ? "text" : "password"}
+                            required
+                            className="w-full bg-input border border-transparent rounded-xl px-4 py-3.5 pr-12 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all clay-inset"
+                            placeholder="Masukkan Kata Sandi"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            disabled={loading}
+                        />
+
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-primary"
+                        >
+                            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                        </button>
+                    </div>
                 </div>
                 <div className="space-y-2">
-                    <label className="text-sm font-semibold text-foreground">Confirm Password</label>
-                    <input 
-                        type="password" 
-                        required
-                        className="w-full bg-input border border-transparent rounded-xl px-4 py-3.5 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all clay-inset"
-                        placeholder="••••••••"
-                        value={passwordConfirmation}
-                        onChange={(e) => setPasswordConfirmation(e.target.value)}
-                        disabled={loading}
-                    />
+                    <label className="text-sm font-semibold text-foreground">
+                        Password Confirmation
+                    </label>
+
+                    <div className="relative">
+                        <input
+                            type={showPasswordConfirmation ? "text" : "password confirmation"}
+                            required
+                            className="w-full bg-input border border-transparent rounded-xl px-4 py-3.5 pr-12 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all clay-inset"
+                            placeholder="Masukkan Kata Sandi"
+                            value={passwordConfirmation}
+                            onChange={(e) => setPasswordConfirmation(e.target.value)}
+                            disabled={loading}
+                        />
+
+                        <button
+                            type="button"
+                            onClick={() => setShowPasswordConfirmation(!showPasswordConfirmation)}
+                            className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-primary"
+                        >
+                            {showPasswordConfirmation ? <EyeOff size={20} /> : <Eye size={20} />}
+                        </button>
+                    </div>
                 </div>
                 {error && (
                     <p className="text-sm text-destructive text-center">{error}</p>
