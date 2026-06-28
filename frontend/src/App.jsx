@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import { AuthProvider } from "./context/AuthContext";
 import AppLayout from "./components/AppLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
+import GuestRoute from "./components/GuestRoute";
 
 // Import pages
 import Landing from "./pages/Landing";
@@ -20,8 +21,8 @@ function App() {
                 <Routes>
                     {/* Public Routes */}
                     <Route path="/" element={<Landing />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
+                    <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
+                    <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
 
                     {/* Protected Routes with Sidebar Layout */}
                     <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>

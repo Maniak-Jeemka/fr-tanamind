@@ -13,4 +13,20 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
+// Handle 401 responses — auto logout jika token expired/invalid
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response && error.response.status === 401) {
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+            // Redirect ke login jika belum di halaman auth
+            if (!window.location.pathname.startsWith("/login") && !window.location.pathname.startsWith("/register")) {
+                window.location.href = "/login";
+            }
+        }
+        return Promise.reject(error);
+    }
+);
+
 export default api;

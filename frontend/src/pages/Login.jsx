@@ -6,13 +6,16 @@ import AuthLayout from '../components/AuthLayout';
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const { login } = useAuth();
+    const { login, loading, error, clearError } = useAuth();
     const navigate = useNavigate();
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        login(email, password);
-        navigate('/dashboard');
+        clearError();
+        const success = await login(email, password);
+        if (success) {
+            navigate('/dashboard');
+        }
     };
 
     return (
@@ -27,6 +30,7 @@ const Login = () => {
                         placeholder="admin@example.com or user@example.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
+                        disabled={loading}
                     />
                 </div>
                 <div className="space-y-2">
@@ -38,13 +42,18 @@ const Login = () => {
                         placeholder="••••••••"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
+                        disabled={loading}
                     />
                 </div>
+                {error && (
+                    <p className="text-sm text-destructive text-center">{error}</p>
+                )}
                 <button 
                     type="submit"
-                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3.5 rounded-xl transition-all clay-primary mt-6"
+                    disabled={loading}
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3.5 rounded-xl transition-all clay-primary mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    Log in
+                    {loading ? 'Logging in...' : 'Log in'}
                 </button>
             </form>
         </AuthLayout>
