@@ -161,7 +161,7 @@ const ScanResult = () => {
                             value={caption}
                             onChange={(e) => setCaption(e.target.value)}
                             placeholder="Write a caption..."
-                            className="w-full p-3 rounded-xl bg-muted/50 border border-border text-foreground focus:outline-none focus:border-primary min-h-[100px] resize-none"
+                            className="w-full p-3 rounded-xl bg-muted/50 border border-border text-foreground focus:outline-none focus:border-primary min-h-25 resize-none"
                         />
                         <div className="flex gap-3 justify-end">
                             <button 
