@@ -1,0 +1,23 @@
+import React from 'react';
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
+
+const ProtectedRoute = ({ children, requireAdmin = false }) => {
+    const { user, loading } = useAuth();
+
+    if (loading) {
+        return <div className="h-screen w-full flex items-center justify-center text-emerald-500">Loading...</div>;
+    }
+
+    if (!user) {
+        return <Navigate to="/login" replace />;
+    }
+
+    if (requireAdmin && user.role !== 'admin') {
+        return <Navigate to="/dashboard" replace />;
+    }
+
+    return children;
+};
+
+export default ProtectedRoute;

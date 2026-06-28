@@ -1,41 +1,51 @@
-// src/App.jsx
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Navbar from "./components/Navbar";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import AppLayout from "./components/AppLayout";
+import ProtectedRoute from "./components/ProtectedRoute";
 
-// Placeholder imports for team members to replace later
-const Landing = () => <div>Landing Page</div>;
-const Login = () => <div>Login Page</div>;
-const Register = () => <div>Register Page</div>;
-const Dashboard = () => <div>Dashboard</div>;
-const Scan = () => <div>Scan Page</div>;
-const Community = () => <div>Community Page</div>;
-const AdminDashboard = () => <div>Admin Dashboard</div>;
+// Import pages
+import Landing from "./pages/Landing";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Dashboard from "./pages/Dashboard";
+import Scan from "./pages/Scan";
+import Community from "./pages/Community";
+import Profile from "./pages/Profile";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 
 function App() {
     return (
-        <Router>
-            {/* Navbar will render on every page */}
-            <Navbar />
-
-            <main className="container">
+        <AuthProvider>
+            <Router>
                 <Routes>
-                    {/* Auth Module */}
+                    {/* Public Routes */}
                     <Route path="/" element={<Landing />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
 
-                    {/* Core Scan Module */}
-                    <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/scan" element={<Scan />} />
+                    {/* Protected Routes with Sidebar Layout */}
+                    <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+                        <Route path="/dashboard" element={<Dashboard />} />
+                        <Route path="/scan" element={<Scan />} />
+                        <Route path="/community" element={<Community />} />
+                        <Route path="/profile" element={<Profile />} />
+                        
+                        {/* Admin Routes */}
+                        <Route 
+                            path="/admin/*" 
+                            element={
+                                <ProtectedRoute requireAdmin={true}>
+                                    <AdminDashboard />
+                                </ProtectedRoute>
+                            } 
+                        />
+                    </Route>
 
-                    {/* Community Module */}
-                    <Route path="/community" element={<Community />} />
-
-                    {/* Admin Module */}
-                    <Route path="/admin" element={<AdminDashboard />} />
+                    {/* Fallback */}
+                    <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
-            </main>
-        </Router>
+            </Router>
+        </AuthProvider>
     );
 }
 
