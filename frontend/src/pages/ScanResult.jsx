@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getScanDetail } from '../services/scanService';
+import { getScanDetail, deleteScan } from '../services/scanService';
 import { createCommunityPost } from '../services/communityService';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
-import { ArrowLeft, Share2, Leaf, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Share2, Leaf, AlertTriangle, ShieldCheck, Trash2 } from 'lucide-react';
+import { showConfirm, showError, showToast } from '../lib/swal';
 
 const ScanResult = () => {
     const { id } = useParams();
@@ -33,6 +34,15 @@ const ScanResult = () => {
 
     const handleShare = async () => {
         if (!caption.trim()) return;
+
+        const confirmResult = await showConfirm(
+            'Share Scan',
+            'Are you sure you want to share this scan to the community?',
+            'Yes, Share',
+            'Cancel'
+        );
+        if (!confirmResult.isConfirmed) return;
+
         setSharing(true);
         try {
             const res = await createCommunityPost({ scan_result_id: id, caption });
@@ -40,11 +50,38 @@ const ScanResult = () => {
                 setScan(prev => ({ ...prev, is_shared: true }));
                 setShowShareModal(false);
                 setCaption("");
+                showToast('Successfully shared to community!', 'success');
+            } else {
+                showError('Sharing Failed', res.message || 'Failed to share the scan result to community.');
             }
         } catch (err) {
             console.error("Failed to share", err);
+            showError('Sharing Failed', 'An error occurred while sharing. Please try again.');
         } finally {
             setSharing(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        const confirmResult = await showConfirm(
+            'Delete Scan',
+            'Are you sure you want to delete this scan history? This action cannot be undone.',
+            'Yes, Delete',
+            'Cancel'
+        );
+        if (!confirmResult.isConfirmed) return;
+
+        try {
+            const res = await deleteScan(id);
+            if (res.status === 'success') {
+                showToast('Scan deleted successfully!', 'success');
+                navigate('/dashboard');
+            } else {
+                showError('Deletion Failed', res.message || 'Failed to delete the scan result.');
+            }
+        } catch (err) {
+            console.error("Failed to delete", err);
+            showError('Deletion Failed', 'An error occurred while deleting. Please try again.');
         }
     };
 
@@ -86,6 +123,14 @@ const ScanResult = () => {
                             Already shared to community
                         </div>
                     )}
+                    
+                    <button 
+                        onClick={handleDelete}
+                        className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-500 font-semibold py-3 rounded-xl transition-all border border-red-500/20 clay-inset flex items-center justify-center gap-2 mt-4"
+                    >
+                        <Trash2 className="w-5 h-5" />
+                        Delete Scan
+                    </button>
                 </div>
 
                 {/* Details Section */}

@@ -64,9 +64,20 @@ export const AuthProvider = ({ children }) => {
                 return false;
             }
         } catch (err) {
-            const message =
-                err.response?.data?.message ||
-                (err.request ? 'Tidak dapat terhubung ke server. Periksa koneksi Anda.' : 'Terjadi kesalahan. Silakan coba lagi.');
+            let message;
+            if (err.response?.data) {
+                const data = err.response.data;
+                // Handle Laravel 422 validation errors: { errors: { field: [msg, ...] } }
+                if (data.errors && typeof data.errors === 'object') {
+                    message = Object.values(data.errors).flat().join(' ');
+                } else {
+                    message = data.message || 'Registrasi gagal.';
+                }
+            } else if (err.request) {
+                message = 'Tidak dapat terhubung ke server. Periksa koneksi Anda.';
+            } else {
+                message = 'Terjadi kesalahan. Silakan coba lagi.';
+            }
             setError(message);
             return false;
         } finally {
@@ -91,8 +102,13 @@ export const AuthProvider = ({ children }) => {
         setError(null);
     };
 
+    const updateUser = (updatedUser) => {
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        setUser(updatedUser);
+    };
+
     return (
-        <AuthContext.Provider value={{ user, loading, error, login, register, logout, clearError }}>
+        <AuthContext.Provider value={{ user, loading, error, login, register, logout, clearError, updateUser }}>
             {children}
         </AuthContext.Provider>
     );

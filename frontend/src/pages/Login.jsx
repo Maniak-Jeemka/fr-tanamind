@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import AuthLayout from '../components/AuthLayout';
 import { Eye, EyeOff, Mail, Lock, LogIn } from "lucide-react";
+import { showToast } from '../lib/swal';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -11,11 +12,18 @@ const Login = () => {
     const { login, loading, error, clearError } = useAuth();
     const navigate = useNavigate();
 
+    useEffect(() => {
+        if (error) {
+            showToast(error, 'error');
+        }
+    }, [error]);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         clearError();
         const success = await login(email, password);
         if (success) {
+            showToast('Logged in successfully', 'success');
             navigate('/dashboard');
         }
     };

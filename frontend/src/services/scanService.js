@@ -32,3 +32,13 @@ export const getScanDetail = async (id) => {
     const response = await api.get(`/scan/${id}`);
     return response.data;
 };
+
+/**
+ * Hapus riwayat scan berdasarkan ID
+ * @param {string|number} id
+ * @returns {Promise<{ status: string, message: string, data: null }>}
+ */
+export const deleteScan = async (id) => {
+    const response = await api.delete(`/scan/${id}`);
+    return response.data;
+};

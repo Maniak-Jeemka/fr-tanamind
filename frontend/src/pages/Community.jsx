@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '../components/ui/card';
-import { Search, MessageSquare, Heart, Share2, Send, Leaf } from 'lucide-react';
+import { Search, MessageSquare, Heart, Share2, Send, Leaf, Trash2 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
-import { getCommunityPosts, addComment } from '../services/communityService';
+import { getCommunityPosts, addComment, deleteCommunityPost, deleteComment } from '../services/communityService';
 import { Link } from 'react-router-dom';
+import { showConfirm, showError, showToast } from '../lib/swal';
 
 const Community = () => {
     const { user } = useAuth();
@@ -52,6 +53,52 @@ const Community = () => {
         }
     };
 
+    const handleDeletePost = async (postId) => {
+        const confirmResult = await showConfirm(
+            'Delete Post',
+            'Are you sure you want to delete this post? The associated scan will be unshared.',
+            'Yes, Delete',
+            'Cancel'
+        );
+        if (!confirmResult.isConfirmed) return;
+
+        try {
+            const res = await deleteCommunityPost(postId);
+            if (res.status === 'success') {
+                showToast('Post deleted successfully!', 'success');
+                fetchPosts();
+            } else {
+                showError('Deletion Failed', res.message || 'Failed to delete post.');
+            }
+        } catch (err) {
+            console.error("Failed to delete post", err);
+            showError('Deletion Failed', 'An error occurred while deleting. Please try again.');
+        }
+    };
+
+    const handleDeleteComment = async (commentId) => {
+        const confirmResult = await showConfirm(
+            'Delete Comment',
+            'Are you sure you want to delete this comment?',
+            'Yes, Delete',
+            'Cancel'
+        );
+        if (!confirmResult.isConfirmed) return;
+
+        try {
+            const res = await deleteComment(commentId);
+            if (res.status === 'success') {
+                showToast('Comment deleted successfully!', 'success');
+                fetchPosts();
+            } else {
+                showError('Deletion Failed', res.message || 'Failed to delete comment.');
+            }
+        } catch (err) {
+            console.error("Failed to delete comment", err);
+            showError('Deletion Failed', 'An error occurred while deleting. Please try again.');
+        }
+    };
+
     return (
         <div className="p-8 max-w-4xl mx-auto space-y-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -97,18 +144,28 @@ const Community = () => {
                     <Card key={post.id} className="bg-card border-none clay-sm rounded-3xl overflow-hidden">
                         <CardContent className="p-6 sm:p-8 space-y-5">
                             {/* Post Header */}
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg clay-primary shrink-0">
-                                    {post.user?.name?.charAt(0) || 'U'}
-                                </div>
-                                <div>
-                                    <h3 className="text-foreground font-bold text-lg">{post.user?.name || 'User'}</h3>
-                                    <div className="flex items-center gap-2 text-sm mt-0.5">
-                                        <span className="text-primary font-semibold capitalize">{post.user?.role || 'Member'}</span>
-                                        <span className="text-muted-foreground/40">•</span>
-                                        <span className="text-muted-foreground">{new Date(post.created_at).toLocaleDateString()}</span>
+                            <div className="flex items-center justify-between gap-4">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg clay-primary shrink-0">
+                                        {post.user?.name?.charAt(0) || 'U'}
+                                    </div>
+                                    <div>
+                                        <h3 className="text-foreground font-bold text-lg">{post.user?.name || 'User'}</h3>
+                                        <div className="flex items-center gap-2 text-sm mt-0.5">
+                                            <span className="text-primary font-semibold capitalize">{post.user?.role || 'Member'}</span>
+                                            <span className="text-muted-foreground/40">•</span>
+                                            <span className="text-muted-foreground">{new Date(post.created_at).toLocaleDateString()}</span>
+                                        </div>
                                     </div>
                                 </div>
+                                {(post.user_id === user?.id || user?.role === 'admin') && (
+                                    <button 
+                                        onClick={() => handleDeletePost(post.id)}
+                                        className="text-red-500 hover:text-red-600 transition-colors p-2 rounded-lg hover:bg-red-500/10 shrink-0"
+                                    >
+                                        <Trash2 className="w-5 h-5" />
+                                    </button>
+                                )}
                             </div>
 
                             {/* Post Content */}
@@ -145,12 +202,22 @@ const Community = () => {
                                 {post.comments && post.comments.length > 0 && (
                                     <div className="space-y-3">
                                         {post.comments.map(comment => (
-                                            <div key={comment.id} className="bg-muted/30 p-3 rounded-xl clay-inset border border-border">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <span className="font-bold text-sm text-foreground">{comment.user?.name || 'User'}</span>
-                                                    <span className="text-xs text-muted-foreground">{new Date(comment.created_at).toLocaleDateString()}</span>
+                                            <div key={comment.id} className="bg-muted/30 p-3 rounded-xl clay-inset border border-border flex justify-between items-start gap-4">
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <span className="font-bold text-sm text-foreground">{comment.user?.name || 'User'}</span>
+                                                        <span className="text-xs text-muted-foreground">{new Date(comment.created_at).toLocaleDateString()}</span>
+                                                    </div>
+                                                    <p className="text-sm text-foreground/80">{comment.body}</p>
                                                 </div>
-                                                <p className="text-sm text-foreground/80">{comment.body}</p>
+                                                {(comment.user_id === user?.id || post.user_id === user?.id || user?.role === 'admin') && (
+                                                    <button 
+                                                        onClick={() => handleDeleteComment(comment.id)}
+                                                        className="text-red-500 hover:text-red-600 transition-colors p-1 rounded-md hover:bg-red-500/10 shrink-0 mt-0.5"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                )}
                                             </div>
                                         ))}
                                     </div>

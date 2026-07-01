@@ -2,14 +2,24 @@ import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Scan, Users, User, ShieldCheck, LogOut, Leaf } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { showConfirm, showToast } from '../lib/swal';
 
 const Sidebar = () => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
 
     const handleLogout = async () => {
-        await logout();
-        navigate('/login');
+        const result = await showConfirm(
+            'Logout',
+            'Are you sure you want to logout?',
+            'Yes, Logout',
+            'Cancel'
+        );
+        if (result.isConfirmed) {
+            await logout();
+            showToast('Logged out successfully', 'success');
+            navigate('/login');
+        }
     };
 
     const navItems = [
@@ -61,7 +71,7 @@ const Sidebar = () => {
                     <img src={user?.avatar} alt="User Avatar" className="w-10 h-10 rounded-full bg-muted object-cover" />
                     <div className="flex flex-col overflow-hidden">
                         <span className="text-sm font-semibold text-sidebar-foreground truncate">{user?.name}</span>
-                        <span className="text-xs text-muted-foreground capitalize">{user?.role}</span>
+                        <span className="text-xs text-muted-foreground capitalize">{user?.occupation || 'Farmer'}</span>
                     </div>
                 </div>
                 

@@ -17,3 +17,13 @@ export const getAdminUsers = async () => {
     const response = await api.get("/admin/users");
     return response.data;
 };
+
+/**
+ * Hapus user berdasarkan ID (khusus Admin)
+ * @param {string|number} id
+ * @returns {Promise<{ status: string, message: string, data: null }>}
+ */
+export const deleteUser = async (id) => {
+    const response = await api.delete(`/admin/users/${id}`);
+    return response.data;
+};

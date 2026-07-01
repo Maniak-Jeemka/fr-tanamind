@@ -29,3 +29,23 @@ export const addComment = async (postId, data) => {
     const response = await api.post(`/community/${postId}/comments`, data);
     return response.data;
 };
+
+/**
+ * Hapus post komunitas berdasarkan ID
+ * @param {string|number} id
+ * @returns {Promise<{ status: string, message: string, data: null }>}
+ */
+export const deleteCommunityPost = async (id) => {
+    const response = await api.delete(`/community/${id}`);
+    return response.data;
+};
+
+/**
+ * Hapus komentar berdasarkan ID
+ * @param {string|number} id
+ * @returns {Promise<{ status: string, message: string, data: null }>}
+ */
+export const deleteComment = async (id) => {
+    const response = await api.delete(`/comments/${id}`);
+    return response.data;
+};

@@ -1,8 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import AuthLayout from '../components/AuthLayout';
-import { Eye, EyeOff, Mail, Lock, User, UserPlus } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, UserPlus, Check, X } from "lucide-react";
+import { showToast } from '../lib/swal';
+
+const passwordRules = [
+    { label: 'Minimum 8 characters', test: (pw) => pw.length >= 8 },
+    { label: 'One uppercase letter', test: (pw) => /[A-Z]/.test(pw) },
+    { label: 'One lowercase letter', test: (pw) => /[a-z]/.test(pw) },
+    { label: 'One number', test: (pw) => /[0-9]/.test(pw) },
+    { label: 'One special character', test: (pw) => /[^A-Za-z0-9]/.test(pw) },
+];
 
 const Register = () => {
     const [name, setName] = useState('');
@@ -11,16 +20,40 @@ const Register = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [passwordConfirmation, setPasswordConfirmation] = useState('');
     const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
+    const [passwordTouched, setPasswordTouched] = useState(false);
     const { register, loading, error, clearError } = useAuth();
     const navigate = useNavigate();
+
+    useEffect(() => {
+        if (error) {
+            showToast(error, 'error');
+        }
+    }, [error]);
+
+    const ruleResults = useMemo(() => passwordRules.map(r => r.test(password)), [password]);
+    const allRulesPassed = ruleResults.every(Boolean);
+    const passwordsMatch = password === passwordConfirmation;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         clearError();
+
+        // Client-side validation
+        if (!allRulesPassed) {
+            showToast('Password does not meet all requirements.', 'error');
+            return;
+        }
+        if (!passwordsMatch) {
+            showToast('Passwords do not match.', 'error');
+            return;
+        }
+
         const success = await register(name, email, password, passwordConfirmation);
         if (success) {
+            showToast('Registered successfully!', 'success');
             navigate('/dashboard');
         }
+        // On failure: form values are preserved (React state is untouched)
     };
 
     return (
@@ -70,6 +103,7 @@ const Register = () => {
                             placeholder="Input Your Password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
+                            onFocus={() => setPasswordTouched(true)}
                             disabled={loading}
                         />
 
@@ -81,6 +115,20 @@ const Register = () => {
                             {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                         </button>
                     </div>
+
+                    {/* Password requirements checklist */}
+                    {passwordTouched && (
+                        <ul className="mt-2 space-y-1 text-xs">
+                            {passwordRules.map((rule, i) => (
+                                <li key={i} className={`flex items-center gap-1.5 transition-colors ${ruleResults[i] ? 'text-primary' : 'text-muted-foreground'}`}>
+                                    {ruleResults[i]
+                                        ? <Check className="w-3.5 h-3.5 shrink-0" />
+                                        : <X className="w-3.5 h-3.5 shrink-0" />}
+                                    {rule.label}
+                                </li>
+                            ))}
+                        </ul>
+                    )}
                 </div>
                 <div className="space-y-2">
                     <label className="text-sm font-semibold text-foreground">
@@ -107,6 +155,14 @@ const Register = () => {
                             {showPasswordConfirmation ? <EyeOff size={20} /> : <Eye size={20} />}
                         </button>
                     </div>
+
+                    {/* Password mismatch warning */}
+                    {passwordConfirmation.length > 0 && !passwordsMatch && (
+                        <p className="text-xs text-destructive flex items-center gap-1.5 mt-1">
+                            <X className="w-3.5 h-3.5 shrink-0" />
+                            Passwords do not match.
+                        </p>
+                    )}
                 </div>
                 {error && (
                     <p className="text-sm text-destructive text-center">{error}</p>

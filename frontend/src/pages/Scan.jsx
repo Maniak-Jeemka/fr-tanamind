@@ -1,15 +1,80 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { UploadCloud, Camera, Leaf } from 'lucide-react';
 import { uploadScan } from '../services/scanService';
 import { useNavigate } from 'react-router-dom';
+import { showError } from '../lib/swal';
 
 const Scan = () => {
     const [image, setImage] = useState(null);
     const [isScanning, setIsScanning] = useState(false);
+    const [isCameraActive, setIsCameraActive] = useState(false);
     const fileInputRef = useRef(null);
     const cameraInputRef = useRef(null);
+    const videoRef = useRef(null);
+    const streamRef = useRef(null);
     const navigate = useNavigate();
+
+    useEffect(() => {
+        return () => {
+            if (streamRef.current) {
+                streamRef.current.getTracks().forEach((track) => track.stop());
+            }
+        };
+    }, []);
+
+    const startCamera = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'environment' }
+            });
+            streamRef.current = stream;
+            setIsCameraActive(true);
+            setTimeout(() => {
+                if (videoRef.current) {
+                    videoRef.current.srcObject = stream;
+                }
+            }, 50);
+        } catch (err) {
+            console.error('Error accessing camera:', err);
+            showError('Camera Error', 'Gagal mengakses kamera. Pastikan izin kamera telah diberikan.');
+        }
+    };
+
+    const stopCamera = () => {
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach((track) => track.stop());
+            streamRef.current = null;
+        }
+        if (videoRef.current) {
+            videoRef.current.srcObject = null;
+        }
+        setIsCameraActive(false);
+    };
+
+    const capturePhoto = () => {
+        if (!videoRef.current) return;
+        const video = videoRef.current;
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth || 640;
+        canvas.height = video.videoHeight || 480;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob((blob) => {
+                if (blob) {
+                    const file = new File([blob], `scan-${Date.now()}.jpg`, { type: 'image/jpeg' });
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        setImage(event.target.result);
+                        stopCamera();
+                        startScan(file);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }, 'image/jpeg', 0.95);
+        }
+    };
 
     const handleFileChange = (e) => {
         if (e.target.files && e.target.files[0]) {
@@ -36,12 +101,12 @@ const Scan = () => {
             if (response.status === 'success' && response.data?.id) {
                 navigate(`/scan/${response.data.id}`);
             } else {
-                alert(response.message || 'Terjadi kesalahan saat memproses gambar.');
+                showError('Error', response.message || 'Terjadi kesalahan saat memproses gambar.');
                 setImage(null);
             }
         } catch (error) {
             console.error('Upload error:', error);
-            alert('Gagal menghubungi server. Pastikan API berjalan.');
+            showError('Connection Error', 'Gagal menghubungi server. Pastikan API berjalan.');
             setImage(null);
         } finally {
             setIsScanning(false);
@@ -64,10 +129,17 @@ const Scan = () => {
                 </CardHeader>
                 <CardContent>
                     <div 
-                        className={`border-2 border-dashed border-muted-foreground/30 bg-muted/30 rounded-2xl flex flex-col items-center justify-center p-12 text-center clay-inset ${!isScanning ? 'cursor-pointer hover:border-primary/50' : ''} transition-colors h-80 relative overflow-hidden`}
-                        onClick={!isScanning ? triggerUpload : undefined}
+                        className={`border-2 border-dashed border-muted-foreground/30 bg-muted/30 rounded-2xl flex flex-col items-center justify-center p-12 text-center clay-inset ${!isScanning && !isCameraActive ? 'cursor-pointer hover:border-primary/50' : ''} transition-colors h-80 relative overflow-hidden`}
+                        onClick={!isScanning && !isCameraActive ? triggerUpload : undefined}
                     >
-                        {image ? (
+                        {isCameraActive ? (
+                            <video 
+                                ref={videoRef} 
+                                autoPlay 
+                                playsInline 
+                                className="absolute inset-0 w-full h-full object-cover" 
+                            />
+                        ) : image ? (
                             <>
                                 <img src={image} alt="Uploaded leaf" className="absolute inset-0 w-full h-full object-cover opacity-60" />
                                 {isScanning && (
@@ -92,17 +164,35 @@ const Scan = () => {
                     <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleFileChange} />
                     <input type="file" accept="image/*" capture="environment" className="hidden" ref={cameraInputRef} onChange={handleFileChange} />
 
-                    {/* Camera Button for Mobile */}
-                    <div className="mt-6">
-                        <button 
-                            onClick={triggerCamera}
-                            disabled={isScanning}
-                            className="w-full flex items-center justify-center gap-2 bg-muted hover:bg-muted/80 disabled:opacity-50 text-foreground font-medium py-3 rounded-xl transition-all border border-border"
-                        >
-                            <Camera className="w-5 h-5" />
-                            Take Photo with Camera
-                        </button>
-                    </div>
+                    {/* Camera Button controls */}
+                    {isCameraActive ? (
+                        <div className="mt-6 flex gap-4">
+                            <button 
+                                onClick={capturePhoto}
+                                className="flex-1 flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-3 rounded-xl transition-all clay-primary cursor-pointer"
+                            >
+                                <Camera className="w-5 h-5" />
+                                Capture Photo
+                            </button>
+                            <button 
+                                onClick={stopCamera}
+                                className="flex-1 flex items-center justify-center gap-2 bg-muted hover:bg-muted/80 text-foreground font-medium py-3 rounded-xl transition-all border border-border cursor-pointer"
+                            >
+                                Close Camera
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="mt-6">
+                            <button 
+                                onClick={startCamera}
+                                disabled={isScanning}
+                                className="w-full flex items-center justify-center gap-2 bg-muted hover:bg-muted/80 disabled:opacity-50 text-foreground font-medium py-3 rounded-xl transition-all border border-border cursor-pointer"
+                            >
+                                <Camera className="w-5 h-5" />
+                                Take Photo with Camera
+                            </button>
+                        </div>
+                    )}
                 </CardContent>
             </Card>
         </div>

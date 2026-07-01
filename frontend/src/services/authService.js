@@ -37,3 +37,18 @@ export const getCurrentUser = async () => {
     const response = await api.get("/user");
     return response.data;
 };
+
+/**
+ * Update the current user profile
+ * @param {FormData} formData
+ * @returns {Promise<{ status: string, message: string, data: object }>}
+ */
+export const updateProfile = async (formData) => {
+    formData.append("_method", "PUT");
+    const response = await api.post("/user/profile", formData, {
+        headers: {
+            "Content-Type": "multipart/form-data"
+        }
+    });
+    return response.data;
+};

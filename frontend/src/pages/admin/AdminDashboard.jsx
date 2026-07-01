@@ -1,34 +1,60 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
-import { Users, Activity, Scan, MessageSquare, Database } from 'lucide-react';
+import { Users, Activity, Scan, MessageSquare, Database, Trash2 } from 'lucide-react';
 import { Badge } from '../../components/ui/badge';
-import { getAdminStats, getAdminUsers } from '../../services/adminService';
+import { getAdminStats, getAdminUsers, deleteUser } from '../../services/adminService';
+import { useAuth } from '../../hooks/useAuth';
+import { showConfirm, showError, showToast } from '../../lib/swal';
 
 const AdminDashboard = () => {
+    const { user } = useAuth();
     const [activeTab, setActiveTab] = useState('overview');
     const [stats, setStats] = useState(null);
     const [usersList, setUsersList] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [statsRes, usersRes] = await Promise.all([
-                    getAdminStats(),
-                    getAdminUsers()
-                ]);
-                
-                if (statsRes.status === 'success') setStats(statsRes.data);
-                if (usersRes.status === 'success') setUsersList(usersRes.data);
-            } catch (error) {
-                console.error("Failed to fetch admin data", error);
-            } finally {
-                setLoading(false);
-            }
-        };
+    const fetchData = async () => {
+        try {
+            const [statsRes, usersRes] = await Promise.all([
+                getAdminStats(),
+                getAdminUsers()
+            ]);
+            
+            if (statsRes.status === 'success') setStats(statsRes.data);
+            if (usersRes.status === 'success') setUsersList(usersRes.data);
+        } catch (error) {
+            console.error("Failed to fetch admin data", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    useEffect(() => {
         fetchData();
     }, []);
+
+    const handleDeleteUser = async (userId) => {
+        const confirmResult = await showConfirm(
+            'Delete User',
+            'Are you sure you want to delete this user? This will delete all of their scans, posts, and comments. This action cannot be undone.',
+            'Yes, Delete',
+            'Cancel'
+        );
+        if (!confirmResult.isConfirmed) return;
+
+        try {
+            const res = await deleteUser(userId);
+            if (res.status === 'success') {
+                showToast('User deleted successfully!', 'success');
+                fetchData();
+            } else {
+                showError('Deletion Failed', res.message || 'Failed to delete user.');
+            }
+        } catch (err) {
+            console.error("Failed to delete user", err);
+            showError('Deletion Failed', 'An error occurred while deleting. Please try again.');
+        }
+    };
 
     const kpis = [
         { label: 'Total Users', value: stats?.total_users || 0, icon: Users, color: 'text-blue-500' },
@@ -125,6 +151,7 @@ const AdminDashboard = () => {
                                                     <th className="px-6 py-4 font-medium">User</th>
                                                     <th className="px-6 py-4 font-medium">Role</th>
                                                     <th className="px-6 py-4 font-medium">Scans</th>
+                                                    <th className="px-6 py-4 font-medium">Actions</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-border">
@@ -145,11 +172,23 @@ const AdminDashboard = () => {
                                                             </Badge>
                                                         </td>
                                                         <td className="px-6 py-4 text-foreground font-medium">{u.scan_results_count || 0}</td>
+                                                        <td className="px-6 py-4 text-foreground">
+                                                            {u.id !== user?.id ? (
+                                                                <button 
+                                                                    onClick={() => handleDeleteUser(u.id)}
+                                                                    className="text-red-500 hover:text-red-600 transition-colors p-1.5 rounded-lg hover:bg-red-500/10"
+                                                                >
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                </button>
+                                                            ) : (
+                                                                <span className="text-xs text-muted-foreground font-medium">You</span>
+                                                            )}
+                                                        </td>
                                                     </tr>
                                                 ))}
                                                 {usersList.length === 0 && (
                                                     <tr>
-                                                        <td colSpan="3" className="px-6 py-8 text-center text-muted-foreground">No users found.</td>
+                                                        <td colSpan="4" className="px-6 py-8 text-center text-muted-foreground">No users found.</td>
                                                     </tr>
                                                 )}
                                             </tbody>
